@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0A1622">
+  <title>The Dasha's Book of Reviews</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: #0A1622;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app {
+      --icon: #BDB8B8;
+      --text: #BDB8B8;
+      --bg: #0A1622;
+      width: 375px;
+      height: 100dvh;
+      max-height: 812px;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-weight: 200;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .review-area {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 100px;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0 28px 0 0;
+      overflow: hidden;
+      font-size: 18px;
+      line-height: 1.6;
+      text-align: center;
+      will-change: transform;
+    }
+
+    .slide img {
+      width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      object-position: left center;
+      display: block;
+      pointer-events: none;
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+
+    .slide.cover {
+      padding: 100px 20px 0 20px;
+      justify-content: center;
+    }
+
+    .slide.cover img {
+      object-position: center center;
+    }
+
+    .cover-hints {
+      display: none;
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 100px;
+      padding: 0 23px;
+      align-items: center;
+      color: var(--text);
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-weight: 200;
+      font-size: 15px;
+      z-index: 6;
+    }
+
+    .cover-hints.visible {
+      display: flex;
+    }
+
+    .hint-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hint-count {
+      flex: 1;
+      text-align: center;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .hint-arrows {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .hint-arrows span {
+      display: block;
+    }
+
+    .slide.anim {
+      transition: transform 0.3s ease-out;
+    }
+
+    .bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 100px;
+      z-index: 5;
+    }
+
+    .bar button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bar svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .counter {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 15px;
+      cursor: pointer;
+      user-select: none;
+      color: var(--text);
+    }
+
+    #favBtn {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .fav-frame {
+      display: none;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 38px;
+      border: 1px solid var(--icon);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .fav-frame.active {
+      display: block;
+    }
+
+    .fav-popup {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      pointer-events: none;
+      opacity: 0;
+      z-index: 10;
+      color: var(--icon);
+    }
+
+    .fav-popup.show {
+      animation: pop 0.5s ease-out forwards;
+    }
+
+    @keyframes pop {
+      0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.8; }
+      35%  { transform: translate(-50%,-50%) scale(1.2); opacity: 0.8; }
+      100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+    }
+
+    @media (max-width: 430px) {
+      .app { width: 100vw; max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="review-area" id="area">
+      <div class="slide cover"><img src="reviews/review_0.jpg" alt="Обложка"></div>
+    </div>
+
+    <div class="fav-popup" id="favPopup">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+      </svg>
+    </div>
+
+    <div class="cover-hints visible" id="coverHints">
+      <div class="hint-group">
+        <div class="hint-arrows">
+          <span>⟶</span>
+          <span>⟵</span>
+        </div>
+        <div>по<br>порядку</div>
+      </div>
+      <div class="hint-count" id="hintCount">73</div>
+      <div class="hint-group">
+        <div class="hint-arrows">
+          <span>↑</span>
+          <span>↓</span>
+        </div>
+        <div>случайный<br>порядок</div>
+      </div>
+    </div>
+
+    <div class="bar">
+      <div class="counter" id="counter"></div>
+      <div class="fav-frame" id="favFrame"></div>
+      <button id="favBtn" aria-label="В избранное">
+        <svg viewBox="0 0 24 24" id="favIcon" fill="none" stroke="var(--icon)" stroke-width="1.2" stroke-linejoin="round">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL = 74;
+    const area = document.getElementById('area');
+    const counterEl = document.getElementById('counter');
+    const favFrame = document.getElementById('favFrame');
+    const favIcon = document.getElementById('favIcon');
+    const favPopup = document.getElementById('favPopup');
+    const coverHints = document.getElementById('coverHints');
+    const hintCount = document.getElementById('hintCount');
+    /* ── State ── */
+    const S = loadState() || {
+      cur: 0,
+      viewed: new Set([0]),
+      seqHistory: [0],
+      seqIdx: 0,
+      randHistory: [],
+      randForward: [],
+      favs: new Set(),
+      favMode: false,
+      favRandHistory: [],
+      busy: false
+    };
+
+    function saveState() {
+      try {
+        localStorage.setItem('book-state', JSON.stringify({
+          cur: S.cur,
+          viewed: [...S.viewed],
+          seqHistory: S.seqHistory,
+          seqIdx: S.seqIdx,
+          randHistory: S.randHistory,
+          randForward: S.randForward,
+          favs: [...S.favs]
+        }));
+      } catch(e) {}
+    }
+
+    function loadState() {
+      try {
+        const d = JSON.parse(localStorage.getItem('book-state'));
+        if (!d) return null;
+        return {
+          cur: d.cur,
+          viewed: new Set(d.viewed),
+          seqHistory: d.seqHistory,
+          seqIdx: d.seqIdx,
+          randHistory: d.randHistory,
+          randForward: d.randForward,
+          favs: new Set(d.favs),
+          favMode: false,
+          favRandHistory: [],
+          busy: false
+        };
+      } catch(e) { return null; }
+    }
+
+    /* ── Helpers ── */
+    function findNextUnviewed(after) {
+      for (let i = 1; i <= TOTAL; i++) {
+        const idx = (after + i) % TOTAL;
+        if (!S.viewed.has(idx)) return idx;
+      }
+      return -1;
+    }
+
+    function resetViewed() {
+      S.viewed.clear();
+      S.viewed.add(S.cur);
+      S.seqHistory = [S.cur];
+      S.seqIdx = 0;
+      S.randHistory = [];
+      S.randForward = [];
+    }
+
+    function getFavList() {
+      return [...S.favs].sort((a, b) => a - b);
+    }
+
+    function reviewHTML(i) {
+      return `<img src="reviews/review_${i}.jpg" alt="${i === 0 ? 'Обложка' : 'Отзыв ' + i}">`;
+    }
+
+    /* ── Display ── */
+    function showReview(index, dir) {
+      if (S.busy) return;
+      S.cur = index;
+      saveState();
+
+      const old = area.querySelector('.slide');
+
+      if (!dir) {
+        old.className = index === 0 ? 'slide cover' : 'slide';
+        old.style.justifyContent = '';
+        old.style.padding = '';
+        old.innerHTML = reviewHTML(index);
+        updateUI();
+        return;
+      }
+
+      S.busy = true;
+
+      const neo = document.createElement('div');
+      neo.className = index === 0 ? 'slide cover' : 'slide';
+      neo.innerHTML = reviewHTML(index);
+
+      const map = {
+        left:  ['translateX(100%)',  'translateX(-100%)'],
+        right: ['translateX(-100%)', 'translateX(100%)'],
+        up:    ['translateY(100%)',  'translateY(-100%)'],
+        down:  ['translateY(-100%)', 'translateY(100%)']
+      };
+
+      neo.style.transform = map[dir][0];
+      area.appendChild(neo);
+      void neo.offsetHeight;
+
+      let cleaned = false;
+      function cleanup() {
+        if (cleaned) return;
+        cleaned = true;
+        old.remove();
+        neo.classList.remove('anim');
+        neo.style.transform = '';
+        S.busy = false;
+      }
+
+      neo.addEventListener('transitionend', cleanup, { once: true });
+      setTimeout(cleanup, 400);
+
+      old.classList.add('anim');
+      neo.classList.add('anim');
+      old.style.transform = map[dir][1];
+      neo.style.transform = 'translate(0,0)';
+
+      updateUI();
+      preloadNeighbors(index);
+    }
+
+    function preloadNeighbors(idx) {
+      const next = findNextUnviewed(S.seqHistory[S.seqIdx] || idx);
+      if (next !== -1) new Image().src = `reviews/review_${next}.jpg`;
+      if (idx > 0) new Image().src = `reviews/review_${idx - 1}.jpg`;
+      if (idx < TOTAL - 1) new Image().src = `reviews/review_${idx + 1}.jpg`;
+    }
+
+    function positionFavFrame() {
+      const bar = counterEl.closest('.bar');
+      const barRect = bar.getBoundingClientRect();
+      const cRect = counterEl.getBoundingClientRect();
+      const bRect = document.getElementById('favBtn').getBoundingClientRect();
+      favFrame.style.left = (cRect.left - barRect.left - 12) + 'px';
+      favFrame.style.right = (barRect.right - bRect.right - 8) + 'px';
+    }
+
+    function updateUI() {
+      const isCover = S.cur === 0 && !S.favMode;
+      coverHints.classList.toggle('visible', isCover);
+
+      // Hide bar elements on cover (cover-hints replaces them)
+      document.getElementById('favBtn').style.display = isCover ? 'none' : '';
+      counterEl.style.display = isCover ? 'none' : '';
+
+      if (S.favMode) {
+        const fl = getFavList();
+        const fi = fl.indexOf(S.cur);
+        favIcon.setAttribute('fill', 'var(--icon)');
+        if (fl.length) {
+          counterEl.textContent = `${fi + 1}/${fl.length}`;
+        } else {
+          counterEl.textContent = '0/0';
+        }
+        favFrame.classList.add('active');
+        positionFavFrame();
+      } else {
+        counterEl.textContent = S.cur === 0 ? '' : `${S.cur}/${TOTAL - 1}`;
+        favFrame.classList.remove('active');
+        favIcon.setAttribute('fill', S.favs.has(S.cur) ? 'var(--icon)' : 'none');
+      }
+    }
+
+    /* ── Sequential navigation — main mode ── */
+    function nextSeq(anim) {
+      if (S.busy) return;
+      if (S.favMode) return nextSeqFav(anim);
+
+      if (S.seqIdx < S.seqHistory.length - 1) {
+        S.seqIdx++;
+        showReview(S.seqHistory[S.seqIdx], anim ? 'left' : null);
+      } else {
+        let next = findNextUnviewed(S.seqHistory[S.seqIdx]);
+        if (next === -1) {
+          resetViewed();
+          next = findNextUnviewed(S.cur);
+          if (next === -1) return;
+        }
+        S.seqHistory.push(next);
+        S.seqIdx++;
+        S.viewed.add(next);
+        showReview(next, anim ? 'left' : null);
+      }
+    }
+
+    function prevSeq(anim) {
+      if (S.busy) return;
+      if (S.favMode) return prevSeqFav(anim);
+
+      if (S.cur !== S.seqHistory[S.seqIdx]) {
+        showReview(S.seqHistory[S.seqIdx], anim ? 'right' : null);
+      } else if (S.seqIdx > 0) {
+        S.seqIdx--;
+        showReview(S.seqHistory[S.seqIdx], anim ? 'right' : null);
+      }
+    }
+
+    /* ── Random navigation — main mode ── */
+    function goRandom(dir) {
+      if (S.busy) return;
+      if (S.favMode) return goRandomFav(dir);
+
+      if (dir === 'up') {
+        // If we went back and there's forward history, restore it
+        if (S.randForward.length) {
+          S.randHistory.push(S.cur);
+          showReview(S.randForward.pop(), 'up');
+          return;
+        }
+        let unviewed = [];
+        for (let i = 0; i < TOTAL; i++) {
+          if (!S.viewed.has(i)) unviewed.push(i);
+        }
+        if (!unviewed.length) {
+          resetViewed();
+          for (let i = 0; i < TOTAL; i++) {
+            if (i !== S.cur) unviewed.push(i);
+          }
+        }
+        if (!unviewed.length) return;
+        const r = unviewed[Math.floor(Math.random() * unviewed.length)];
+        S.randHistory.push(S.cur);
+        S.viewed.add(r);
+        showReview(r, 'up');
+      } else {
+        if (!S.randHistory.length) return;
+        S.randForward.push(S.cur);
+        showReview(S.randHistory.pop(), 'down');
+      }
+    }
+
+    /* ── Sequential navigation — favorites mode ── */
+    function nextSeqFav(anim) {
+      const fl = getFavList();
+      if (!fl.length) { toggleFavMode(); return; }
+      const ci = fl.indexOf(S.cur);
+      const ni = ci === -1 ? 0 : (ci + 1) % fl.length;
+      showReview(fl[ni], anim ? 'left' : null);
+    }
+
+    function prevSeqFav(anim) {
+      const fl = getFavList();
+      if (!fl.length) { toggleFavMode(); return; }
+      const ci = fl.indexOf(S.cur);
+      const ni = ci <= 0 ? fl.length - 1 : ci - 1;
+      showReview(fl[ni], anim ? 'right' : null);
+    }
+
+    /* ── Random navigation — favorites mode ── */
+    function goRandomFav(dir) {
+      const fl = getFavList();
+      if (!fl.length) { toggleFavMode(); return; }
+
+      if (dir === 'up') {
+        if (fl.length <= 1) return;
+        let r;
+        do { r = fl[Math.floor(Math.random() * fl.length)]; } while (r === S.cur);
+        S.favRandHistory.push(S.cur);
+        showReview(r, 'up');
+      } else {
+        if (!S.favRandHistory.length) return;
+        showReview(S.favRandHistory.pop(), 'down');
+      }
+    }
+
+    /* ── Favorites ── */
+    function toggleFav() {
+      if (S.favs.has(S.cur)) {
+        const removed = S.cur;
+        S.favs.delete(removed);
+        if (S.favMode) {
+          const fl = getFavList();
+          if (!fl.length) {
+            const slide = area.querySelector('.slide');
+            if (slide) { slide.className = 'slide'; slide.style.justifyContent = 'center'; slide.style.padding = '0'; slide.innerHTML = 'пусто'; }
+            updateUI();
+            return;
+          }
+          // Find the previous favorite relative to the removed one
+          const oldList = [...fl, removed].sort((a, b) => a - b);
+          const oldIdx = oldList.indexOf(removed);
+          const prevIdx = oldIdx > 0 ? oldIdx - 1 : fl.length - 1;
+          showReview(fl[Math.min(prevIdx, fl.length - 1)], null);
+          return;
+        }
+      } else {
+        S.favs.add(S.cur);
+        showFavPopup();
+      }
+      saveState();
+      updateUI();
+    }
+
+    function showFavPopup() {
+      favPopup.classList.remove('show');
+      void favPopup.offsetHeight;
+      favPopup.classList.add('show');
+      setTimeout(() => favPopup.classList.remove('show'), 500);
+    }
+
+    /* ── Bookmark button ── */
+    document.getElementById('favBtn').addEventListener('click', () => {
+      if (S.favMode && S.favs.size === 0) {
+        toggleFavMode();
+      } else {
+        toggleFav();
+      }
+    });
+
+    /* ── Counter → toggle favorites mode ── */
+    function toggleFavMode() {
+      S.favMode = !S.favMode;
+      if (S.favMode) {
+        S.savedReview = S.cur;
+        S.favRandHistory = [];
+        const fl = getFavList();
+        if (!fl.length) {
+          const slide = area.querySelector('.slide');
+          if (slide) { slide.className = 'slide'; slide.style.justifyContent = 'center'; slide.style.padding = '0'; slide.innerHTML = 'пусто'; }
+          updateUI();
+          return;
+        }
+        if (fl.indexOf(S.cur) === -1) {
+          showReview(fl[0], null);
+          return;
+        }
+      } else {
+        showReview(S.savedReview, null);
+        return;
+      }
+      updateUI();
+    }
+
+    counterEl.addEventListener('click', toggleFavMode);
+    hintCount.addEventListener('click', toggleFavMode);
+    favFrame.addEventListener('click', () => {
+      if (S.favMode) toggleFavMode();
+    });
+
+    /* ── Gesture handling ── */
+    let tStart = null;
+    let lastTapTime = 0;
+
+    area.addEventListener('touchstart', e => {
+      S.busy = false; // safety reset
+      const t = e.touches[0];
+      tStart = { x: t.clientX, y: t.clientY };
+    }, { passive: true });
+
+    area.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+    area.addEventListener('touchend', e => {
+      if (!tStart) return;
+      const t = e.changedTouches[0];
+      handleGesture(t.clientX - tStart.x, t.clientY - tStart.y, t.clientX);
+      tStart = null;
+    }, { passive: true });
+
+    let mStart = null;
+
+    area.addEventListener('mousedown', e => {
+      S.busy = false;
+      mStart = { x: e.clientX, y: e.clientY };
+    });
+
+    area.addEventListener('mouseup', e => {
+      if (!mStart) return;
+      handleGesture(e.clientX - mStart.x, e.clientY - mStart.y, e.clientX);
+      mStart = null;
+    });
+
+    function handleGesture(dx, dy, tapX) {
+      const ax = Math.abs(dx), ay = Math.abs(dy);
+      const dist = Math.max(ax, ay);
+
+      if (dist > 50) {
+        if (ax > ay) {
+          dx < 0 ? nextSeq(true) : prevSeq(true);
+        } else {
+          dy < 0 ? goRandom('up') : goRandom('down');
+        }
+      } else {
+        const rect = area.getBoundingClientRect();
+        const x = tapX - rect.left;
+        const w = rect.width;
+
+        if (x < w * 0.2) {
+          prevSeq(false);
+        } else if (x > w * 0.7) {
+          nextSeq(false);
+        } else {
+          const now = Date.now();
+          if (now - lastTapTime < 300) {
+            toggleFav();
+            lastTapTime = 0;
+          } else {
+            lastTapTime = now;
+          }
+        }
+      }
+    }
+
+    /* ── Keyboard (desktop) ── */
+    document.addEventListener('keydown', e => {
+      if (S.busy) return;
+      switch (e.key) {
+        case 'ArrowRight': nextSeq(true); break;
+        case 'ArrowLeft':  prevSeq(true); break;
+        case 'ArrowUp':    e.preventDefault(); goRandom('up'); break;
+        case 'ArrowDown':  e.preventDefault(); goRandom('down'); break;
+        case 'f':          toggleFav(); break;
+      }
+    });
+
+    // Restore saved review on load
+    if (S.cur !== 0) {
+      const slide = area.querySelector('.slide');
+      slide.className = 'slide';
+      slide.innerHTML = reviewHTML(S.cur);
+    }
+    updateUI();
+  </script>
+</body>
+</html>
