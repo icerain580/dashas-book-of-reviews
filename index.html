@@ -624,7 +624,6 @@
 
     area.addEventListener('touchstart', e => {
       usedTouch = true;
-      S.busy = false;
       const t = e.touches[0];
       tStart = { x: t.clientX, y: t.clientY };
     }, { passive: true });
@@ -642,7 +641,6 @@
 
     area.addEventListener('mousedown', e => {
       if (usedTouch) return;
-      S.busy = false;
       mStart = { x: e.clientX, y: e.clientY };
     });
 
