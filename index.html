@@ -446,6 +446,15 @@
       if (S.busy) return;
       if (S.favMode) return nextSeqFav(anim);
 
+      // Resume from saved position after cover
+      if (S.cur === 0 && S.resumeAt) {
+        const r = S.resumeAt;
+        S.resumeAt = null;
+        S.viewed.add(r);
+        showReview(r, anim ? 'left' : null);
+        return;
+      }
+
       if (S.seqIdx < S.seqHistory.length - 1) {
         S.seqIdx++;
         showReview(S.seqHistory[S.seqIdx], anim ? 'left' : null);
@@ -481,6 +490,14 @@
       if (S.favMode) return goRandomFav(dir);
 
       if (dir === 'up') {
+        // Resume from saved position after cover
+        if (S.cur === 0 && S.resumeAt) {
+          const r = S.resumeAt;
+          S.resumeAt = null;
+          S.viewed.add(r);
+          showReview(r, 'up');
+          return;
+        }
         // If we went back and there's forward history, restore it
         if (S.randForward.length) {
           S.randHistory.push(S.cur);
@@ -694,12 +711,9 @@
       }
     });
 
-    // Restore saved review on load
-    if (S.cur !== 0) {
-      const slide = area.querySelector('.slide');
-      slide.className = 'slide';
-      slide.innerHTML = reviewHTML(S.cur);
-    }
+    // Always start on cover, but remember where to resume
+    S.resumeAt = S.cur || null;
+    S.cur = 0;
     updateUI();
   </script>
 </body>
