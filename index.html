@@ -606,9 +606,11 @@
     /* ── Gesture handling ── */
     let tStart = null;
     let lastTapTime = 0;
+    let usedTouch = false;
 
     area.addEventListener('touchstart', e => {
-      S.busy = false; // safety reset
+      usedTouch = true;
+      S.busy = false;
       const t = e.touches[0];
       tStart = { x: t.clientX, y: t.clientY };
     }, { passive: true });
@@ -625,11 +627,13 @@
     let mStart = null;
 
     area.addEventListener('mousedown', e => {
+      if (usedTouch) return;
       S.busy = false;
       mStart = { x: e.clientX, y: e.clientY };
     });
 
     area.addEventListener('mouseup', e => {
+      if (usedTouch) { usedTouch = false; return; }
       if (!mStart) return;
       handleGesture(e.clientX - mStart.x, e.clientY - mStart.y, e.clientX);
       mStart = null;
