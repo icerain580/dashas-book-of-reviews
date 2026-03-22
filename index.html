@@ -330,8 +330,22 @@
     }
 
     /* ── Display ── */
+    function cleanupSlides() {
+      // Keep only the last slide, remove all others
+      const slides = area.querySelectorAll('.slide');
+      if (slides.length > 1) {
+        for (let i = 0; i < slides.length - 1; i++) slides[i].remove();
+      }
+      const last = area.querySelector('.slide');
+      if (last) {
+        last.classList.remove('anim');
+        last.style.transform = '';
+      }
+      S.busy = false;
+    }
+
     function showReview(index, dir) {
-      if (S.busy) return;
+      if (S.busy) cleanupSlides();
       S.cur = index;
       saveState();
 
