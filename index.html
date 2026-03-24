@@ -22,9 +22,9 @@
       --icon: #BDB8B8;
       --text: #BDB8B8;
       --bg: #0A1622;
-      width: 375px;
+      width: 100vw;
+      max-width: 600px;
       height: 100dvh;
-      max-height: 812px;
       position: relative;
       overflow: hidden;
       background: var(--bg);
@@ -201,8 +201,16 @@
       100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
     }
 
-    @media (max-width: 430px) {
-      .app { width: 100vw; max-height: none; }
+    @media (min-width: 601px) {
+      .review-area { bottom: 120px; }
+      .bar { height: 120px; }
+      .cover-hints { height: 120px; font-size: 17px; }
+      .hint-count { font-size: 17px; }
+      .counter { font-size: 17px; }
+      .bar svg { width: 26px; height: 26px; }
+      .fav-frame { height: 44px; }
+      .slide { font-size: 22px; }
+      .slide.cover { padding-top: 140px; }
     }
   </style>
 </head>
