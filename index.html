@@ -713,8 +713,8 @@
       switch (e.key) {
         case 'ArrowRight': nextSeq(true); break;
         case 'ArrowLeft':  prevSeq(true); break;
-        case 'ArrowUp':    e.preventDefault(); goRandom('up'); break;
-        case 'ArrowDown':  e.preventDefault(); goRandom('down'); break;
+        case 'ArrowUp':    e.preventDefault(); goRandom('down'); break;
+        case 'ArrowDown':  e.preventDefault(); goRandom('up'); break;
         case 'f':          toggleFav(); break;
       }
     });
